@@ -1,0 +1,53 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "random-decision-maker",
+  "title": "Random Decision Maker",
+  "description": "Make decisions with dramatic flair! Yes/No answers and spin-the-wheel for multiple options.",
+  "icon": "logo.png",
+  "author": "shivraj-roy",
+  "platforms": [
+    "macOS",
+    "Windows"
+  ],
+  "categories": ["Fun", "Productivity"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "decide-yes-no",
+      "title": "Decide Yes or No",
+      "description": "Ask a question and get a dramatic Yes/No answer",
+      "mode": "view"
+    },
+    {
+      "name": "spin-wheel",
+      "title": "Spin the Wheel",
+      "description": "Add options and spin to pick one randomly",
+      "mode": "view"
+    },
+    {
+      "name": "view-history",
+      "title": "Decision History",
+      "description": "View all your past decisions",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.104.1",
+    "@raycast/utils": "^1.17.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.0.4",
+    "@types/node": "22.13.10",
+    "@types/react": "19.0.10",
+    "eslint": "^9.22.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
