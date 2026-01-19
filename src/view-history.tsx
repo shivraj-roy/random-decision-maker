@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { List, ActionPanel, Action, Icon, Alert, confirmAlert, Color } from "@raycast/api";
-import { getHistory, clearHistory, Decision } from "./utils/storage";
+import { getHistory, clearHistory, deleteDecision, Decision } from "./utils/storage";
 
 export default function ViewHistory() {
   const [history, setHistory] = useState<Decision[]>([]);
@@ -15,6 +15,11 @@ export default function ViewHistory() {
     const data = await getHistory();
     setHistory(data);
     setIsLoading(false);
+  };
+
+  const handleDeleteDecision = async (id: string) => {
+    await deleteDecision(id);
+    setHistory(history.filter((d) => d.id !== id));
   };
 
   const handleClearHistory = async () => {
@@ -81,12 +86,19 @@ export default function ViewHistory() {
                 ]}
                 actions={
                   <ActionPanel>
-                    <Action.CopyToClipboard title="Copy Result" content={`${decision.question}: ${decision.result}`} />
+                    <Action
+                      title="Delete"
+                      icon={Icon.Trash}
+                      style={Action.Style.Destructive}
+                      onAction={() => handleDeleteDecision(decision.id)}
+                      shortcut={{ modifiers: ["cmd"], key: "return" }}
+                    />
                     <Action
                       title="Clear All History"
                       icon={Icon.Trash}
                       style={Action.Style.Destructive}
                       onAction={handleClearHistory}
+                      shortcut={{ modifiers: ["cmd", "shift"], key: "return" }}
                     />
                   </ActionPanel>
                 }

@@ -47,6 +47,12 @@ export async function addToHistory(decision: Omit<Decision, "id" | "timestamp">)
   await LocalStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
 }
 
+export async function deleteDecision(id: string): Promise<void> {
+  const history = await getHistory();
+  const updated = history.filter((d) => d.id !== id);
+  await LocalStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+}
+
 export async function clearHistory(): Promise<void> {
   await LocalStorage.removeItem(HISTORY_KEY);
 }
