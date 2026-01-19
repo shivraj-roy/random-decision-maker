@@ -1,16 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  ActionPanel,
-  Action,
-  Icon,
-  Form,
-  Detail,
-} from "@raycast/api";
-import {
-  WHEEL_CELEBRATION,
-  SPINNING_MESSAGES,
-  getRandomItem,
-} from "./utils/messages";
+import { ActionPanel, Action, Icon, Form, Detail, Color } from "@raycast/api";
+import { WHEEL_CELEBRATION, SPINNING_MESSAGES, getRandomItem } from "./utils/messages";
 import { addToHistory, getPresets, savePreset, WheelPreset } from "./utils/storage";
 
 // Simple robust ID generator to avoid any crypto issues
@@ -28,15 +18,15 @@ export default function SpinWheel() {
     { id: generateId(), value: "" },
     { id: generateId(), value: "" },
   ]);
-  
+
   // Use Ref to track values WITHOUT triggering re-renders on every keystroke
   const valuesRef = useRef<Record<string, string>>({});
   const [newFieldId, setNewFieldId] = useState<string | null>(null);
-  
+
   const [phase, setPhase] = useState<Phase>("setup");
-  const [currentDisplay, setCurrentDisplay] = useState("");
+  const [currentDisplay, setCurrentDisplay] = useState<{ icon: Icon; text: string } | null>(null);
   const [winner, setWinner] = useState("");
-  const [celebration, setCelebration] = useState("");
+  const [celebration, setCelebration] = useState<{ icon: Icon; text: string } | null>(null);
   const [presets, setPresets] = useState<WheelPreset[]>([]);
 
   useEffect(() => {
@@ -49,9 +39,9 @@ export default function SpinWheel() {
   };
 
   const syncRefToState = () => {
-    return fields.map(f => ({
+    return fields.map((f) => ({
       ...f,
-      value: valuesRef.current[f.id] || ""
+      value: valuesRef.current[f.id] || "",
     }));
   };
 
@@ -75,11 +65,11 @@ export default function SpinWheel() {
     // Current values from ref
     const synced = syncRefToState();
     const cleaned = synced.filter((f) => f.value.trim() !== "");
-    
+
     while (cleaned.length < 2) {
       cleaned.push({ id: generateId(), value: "" });
     }
-    
+
     setFields(cleaned);
     setPhase("setup");
     setNewFieldId(null);
@@ -97,15 +87,15 @@ export default function SpinWheel() {
 
     let spinCount = 0;
     const totalSpins = 20 + Math.floor(Math.random() * 10);
-    
+
     const spinInterval = setInterval(() => {
       const randomOption = validOptions[Math.floor(Math.random() * validOptions.length)];
-      setCurrentDisplay(`🎰 ${randomOption}`);
+      setCurrentDisplay({ icon: Icon.Star, text: randomOption });
       spinCount++;
 
       if (spinCount >= totalSpins) {
         clearInterval(spinInterval);
-        
+
         const winningOption = validOptions[Math.floor(Math.random() * validOptions.length)];
         setWinner(winningOption);
         setCelebration(getRandomItem(WHEEL_CELEBRATION));
@@ -130,18 +120,38 @@ export default function SpinWheel() {
     savePreset(`Wheel ${new Date().toLocaleDateString()}`, validOptions).then(() => loadPresets());
   };
 
-  if (phase === "spinning") {
+  if (phase === "spinning" && currentDisplay) {
     return (
       <Detail
-        markdown={`# 🎡 SPINNING THE WHEEL!\n\n---\n\n## ${currentDisplay}\n\n---\n\n*Hold tight...*`}
+        navigationTitle="Spinning..."
+        markdown={`# SPINNING THE WHEEL!\n\n---\n\n## ${currentDisplay.text}\n\n---\n\n*Hold tight...*`}
+        metadata={
+          <Detail.Metadata>
+            <Detail.Metadata.Label
+              title="Status"
+              text="Spinning"
+              icon={{ source: currentDisplay.icon, tintColor: Color.Yellow }}
+            />
+          </Detail.Metadata>
+        }
       />
     );
   }
 
-  if (phase === "result") {
+  if (phase === "result" && celebration) {
     return (
       <Detail
-        markdown={`# ${celebration}\n\n---\n\n## 🏆 ${winner}\n\n---\n\n*The wheel has spoken!*`}
+        navigationTitle="Winner!"
+        markdown={`# ${celebration.text}\n\n## ${winner}`}
+        metadata={
+          <Detail.Metadata>
+            <Detail.Metadata.Label
+              title="Winner"
+              text={winner}
+              icon={{ source: Icon.Trophy, tintColor: Color.Yellow }}
+            />
+          </Detail.Metadata>
+        }
         actions={
           <ActionPanel>
             <Action title="Back to Setup" icon={Icon.RotateClockwise} onAction={handleBackToSetup} />
@@ -155,11 +165,22 @@ export default function SpinWheel() {
     <Form
       actions={
         <ActionPanel>
-          <Action.SubmitForm title="🎰 Spin the Wheel!" icon={Icon.Star} onSubmit={handleSubmit} />
-          <Action title="Add More Options" icon={Icon.Plus} onAction={handleAddField} shortcut={{ modifiers: ["cmd"], key: "n" }} />
+          <Action.SubmitForm title="Spin the Wheel!" icon={Icon.Star} onSubmit={handleSubmit} />
+          <Action
+            title="Add More Options"
+            icon={Icon.Plus}
+            onAction={handleAddField}
+            shortcut={{ modifiers: ["cmd"], key: "n" }}
+          />
           <Action.SubmitForm title="Save as Preset" icon={Icon.SaveDocument} onSubmit={handleSavePreset} />
-          <Action title="Clear All" icon={Icon.Trash} style={Action.Style.Destructive} onAction={handleClearAll} shortcut={{ modifiers: ["cmd", "shift"], key: "delete" }} />
-          
+          <Action
+            title="Clear All"
+            icon={Icon.Trash}
+            style={Action.Style.Destructive}
+            onAction={handleClearAll}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "delete" }}
+          />
+
           <ActionPanel.Section title="Presets">
             {presets.map((preset) => (
               <Action
@@ -167,11 +188,11 @@ export default function SpinWheel() {
                 title={`Load: ${preset.name}`}
                 icon={Icon.Download}
                 onAction={() => {
-                  const newFields = preset.options.map(opt => ({ id: generateId(), value: opt }));
+                  const newFields = preset.options.map((opt) => ({ id: generateId(), value: opt }));
                   setFields(newFields);
                   // Populate ref
                   valuesRef.current = {};
-                  newFields.forEach(f => valuesRef.current[f.id] = f.value);
+                  newFields.forEach((f) => (valuesRef.current[f.id] = f.value));
                   setNewFieldId(null);
                 }}
               />

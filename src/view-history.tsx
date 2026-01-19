@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { List, ActionPanel, Action, Icon, Alert, confirmAlert } from "@raycast/api";
+import { List, ActionPanel, Action, Icon, Alert, confirmAlert, Color } from "@raycast/api";
 import { getHistory, clearHistory, Decision } from "./utils/storage";
 
 export default function ViewHistory() {
@@ -34,7 +34,7 @@ export default function ViewHistory() {
     const date = new Date(timestamp);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return `Today at ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
     } else if (diffDays === 1) {
@@ -48,9 +48,12 @@ export default function ViewHistory() {
 
   const getIcon = (decision: Decision) => {
     if (decision.type === "yes-no") {
-      return decision.result === "YES" ? "✅" : "❌";
+      return {
+        source: decision.result === "YES" ? Icon.CheckCircle : Icon.XMarkCircle,
+        tintColor: decision.result === "YES" ? Color.Green : Color.Red,
+      };
     }
-    return "🎰";
+    return { source: Icon.Star, tintColor: Color.Yellow };
   };
 
   return (
@@ -78,10 +81,7 @@ export default function ViewHistory() {
                 ]}
                 actions={
                   <ActionPanel>
-                    <Action.CopyToClipboard
-                      title="Copy Result"
-                      content={`${decision.question}: ${decision.result}`}
-                    />
+                    <Action.CopyToClipboard title="Copy Result" content={`${decision.question}: ${decision.result}`} />
                     <Action
                       title="Clear All History"
                       icon={Icon.Trash}
