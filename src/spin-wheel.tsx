@@ -22,6 +22,7 @@ export default function SpinWheel() {
   // Use Ref to track values WITHOUT triggering re-renders on every keystroke
   const valuesRef = useRef<Record<string, string>>({});
   const [newFieldId, setNewFieldId] = useState<string | null>(null);
+  const [focusedFieldId, setFocusedFieldId] = useState<string | null>(null);
 
   const [phase, setPhase] = useState<Phase>("setup");
   const [currentDisplay, setCurrentDisplay] = useState<{ icon: Icon; text: string } | null>(null);
@@ -52,6 +53,14 @@ export default function SpinWheel() {
     setNewFieldId(id);
   };
 
+  const handleDeleteField = (fieldId: string) => {
+    const synced = syncRefToState();
+    const updated = synced.filter((f) => f.id !== fieldId);
+    delete valuesRef.current[fieldId];
+    setFields(updated);
+    setFocusedFieldId(null);
+  };
+
   const handleClearAll = () => {
     valuesRef.current = {};
     setFields([
@@ -59,6 +68,7 @@ export default function SpinWheel() {
       { id: generateId(), value: "" },
     ]);
     setNewFieldId(null);
+    setFocusedFieldId(null);
   };
 
   const handleBackToSetup = () => {
@@ -172,13 +182,22 @@ export default function SpinWheel() {
             onAction={handleAddField}
             shortcut={{ modifiers: ["cmd"], key: "n" }}
           />
+          {focusedFieldId && fields.findIndex((f) => f.id === focusedFieldId) >= 2 && (
+            <Action
+              title="Delete Option"
+              icon={Icon.Trash}
+              style={Action.Style.Destructive}
+              onAction={() => handleDeleteField(focusedFieldId)}
+              shortcut={{ modifiers: ["cmd"], key: "backspace" }}
+            />
+          )}
           <Action.SubmitForm title="Save as Preset" icon={Icon.SaveDocument} onSubmit={handleSavePreset} />
           <Action
             title="Clear All"
             icon={Icon.Trash}
             style={Action.Style.Destructive}
             onAction={handleClearAll}
-            shortcut={{ modifiers: ["cmd", "shift"], key: "delete" }}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "backspace" }}
           />
 
           <ActionPanel.Section title="Presets">
@@ -201,7 +220,7 @@ export default function SpinWheel() {
         </ActionPanel>
       }
     >
-      <Form.Description text="Enter your options below. Use Cmd+N to add more fields!" />
+      <Form.Description text="Enter your options below. Use ⌘+N to add more fields!" />
       {fields.map((field, index) => (
         <Form.TextField
           key={field.id}
@@ -210,6 +229,7 @@ export default function SpinWheel() {
           placeholder="What's an option?"
           defaultValue={field.value}
           autoFocus={newFieldId ? field.id === newFieldId : index === 0}
+          onFocus={() => setFocusedFieldId(field.id)}
           onChange={(val) => {
             valuesRef.current[field.id] = val;
           }}
