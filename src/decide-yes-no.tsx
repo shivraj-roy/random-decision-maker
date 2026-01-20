@@ -1,7 +1,25 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Form, ActionPanel, Action, Detail, Icon, Color } from "@raycast/api";
 import { YES_RESPONSES, NO_RESPONSES, THINKING_MESSAGES, getRandomItem, Response, Message } from "./utils/messages";
 import { addToHistory } from "./utils/storage";
+
+const PLACEHOLDER_QUESTIONS = [
+  "Should I eat pizza for dinner?",
+  "Should I take a break right now?",
+  "Should I text my crush?",
+  "Should I buy that thing I've been eyeing?",
+  "Should I go to the gym today?",
+  "Should I binge-watch another episode?",
+  "Should I adopt a cat?",
+  "Should I learn a new skill?",
+  "Should I take the day off?",
+  "Should I try that new restaurant?",
+  "Should I cut my own hair?",
+  "Should I start a side project?",
+  "Should I book that trip?",
+  "Should I ask for a raise?",
+  "Should I stay up late tonight?",
+];
 
 type Phase = "input" | "thinking" | "result";
 
@@ -11,6 +29,8 @@ export default function DecideYesNo() {
   const [thinkingMessage, setThinkingMessage] = useState<Message | null>(null);
   const [result, setResult] = useState<Response | null>(null);
   const [isYes, setIsYes] = useState(false);
+
+  const placeholder = useMemo(() => getRandomItem(PLACEHOLDER_QUESTIONS), []);
 
   const handleSubmit = async (values: { question: string }) => {
     if (!values.question.trim()) return;
@@ -27,7 +47,6 @@ export default function DecideYesNo() {
       setThinkingMessage(THINKING_MESSAGES[messageIndex]);
     }, 400);
 
-    // After 3 seconds, reveal the answer
     setTimeout(async () => {
       clearInterval(thinkingInterval);
 
@@ -37,7 +56,6 @@ export default function DecideYesNo() {
       setResult(response);
       setPhase("result");
 
-      // Save to history
       await addToHistory({
         type: "yes-no",
         question: values.question,
@@ -52,7 +70,6 @@ export default function DecideYesNo() {
     setResult(null);
   };
 
-  // Input phase - ask the question
   if (phase === "input") {
     return (
       <Form
@@ -65,14 +82,13 @@ export default function DecideYesNo() {
         <Form.TextField
           id="question"
           title="Your Question"
-          placeholder="Should I..."
+          placeholder={placeholder}
           info="Ask any yes/no question and let the universe decide!"
         />
       </Form>
     );
   }
 
-  // Thinking phase - dramatic suspense
   if (phase === "thinking" && thinkingMessage) {
     return (
       <Detail
@@ -88,7 +104,6 @@ export default function DecideYesNo() {
     );
   }
 
-  // Result phase - the answer!
   if (phase === "result" && result) {
     return (
       <Detail
