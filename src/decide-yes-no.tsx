@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Form, ActionPanel, Action, Detail, Icon, Color } from "@raycast/api";
-import { YES_RESPONSES, NO_RESPONSES, THINKING_MESSAGES, getRandomItem } from "./utils/messages";
+import { YES_RESPONSES, NO_RESPONSES, THINKING_MESSAGES, getRandomItem, Response, Message } from "./utils/messages";
 import { addToHistory } from "./utils/storage";
 
 type Phase = "input" | "thinking" | "result";
@@ -8,8 +8,8 @@ type Phase = "input" | "thinking" | "result";
 export default function DecideYesNo() {
   const [phase, setPhase] = useState<Phase>("input");
   const [question, setQuestion] = useState("");
-  const [thinkingMessage, setThinkingMessage] = useState<{ icon: Icon; text: string } | null>(null);
-  const [result, setResult] = useState<{ icon: Icon; title: string; subtitle: string } | null>(null);
+  const [thinkingMessage, setThinkingMessage] = useState<Message | null>(null);
+  const [result, setResult] = useState<Response | null>(null);
   const [isYes, setIsYes] = useState(false);
 
   const handleSubmit = async (values: { question: string }) => {
@@ -27,7 +27,7 @@ export default function DecideYesNo() {
       setThinkingMessage(THINKING_MESSAGES[messageIndex]);
     }, 400);
 
-    // After 2 seconds, reveal the answer
+    // After 3 seconds, reveal the answer
     setTimeout(async () => {
       clearInterval(thinkingInterval);
 
@@ -43,7 +43,7 @@ export default function DecideYesNo() {
         question: values.question,
         result: yes ? "YES" : "NO",
       });
-    }, 2000);
+    }, 3000);
   };
 
   const reset = () => {
@@ -76,11 +76,12 @@ export default function DecideYesNo() {
   if (phase === "thinking" && thinkingMessage) {
     return (
       <Detail
+        isLoading={true}
         navigationTitle="Thinking..."
         markdown={`# ${thinkingMessage.text}\n\n---\n\n*"${question}"*`}
         metadata={
           <Detail.Metadata>
-            <Detail.Metadata.Label title="Status" text="Processing" icon={thinkingMessage.icon} />
+            <Detail.Metadata.Label title="Status" text="Processing" icon={Icon.CircleProgress} />
           </Detail.Metadata>
         }
       />
@@ -98,7 +99,10 @@ export default function DecideYesNo() {
             <Detail.Metadata.Label
               title="Answer"
               text={isYes ? "YES" : "NO"}
-              icon={{ source: result.icon, tintColor: isYes ? Color.Green : Color.Red }}
+              icon={{
+                source: isYes ? Icon.CheckCircle : Icon.XMarkCircle,
+                tintColor: isYes ? Color.Green : Color.Red,
+              }}
             />
             <Detail.Metadata.Separator />
             <Detail.Metadata.Label title="Question" text={question} />

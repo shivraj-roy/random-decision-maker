@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { ActionPanel, Action, Icon, Form, Detail, Color } from "@raycast/api";
-import { WHEEL_CELEBRATION, SPINNING_MESSAGES, getRandomItem } from "./utils/messages";
+import { WHEEL_CELEBRATION, SPINNING_MESSAGES, getRandomItem, Message } from "./utils/messages";
 import { addToHistory, getPresets, savePreset, WheelPreset } from "./utils/storage";
 
-// Simple robust ID generator to avoid any crypto issues
 const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
 type Phase = "setup" | "spinning" | "result";
@@ -19,15 +18,14 @@ export default function SpinWheel() {
     { id: generateId(), value: "" },
   ]);
 
-  // Use Ref to track values WITHOUT triggering re-renders on every keystroke
   const valuesRef = useRef<Record<string, string>>({});
   const [newFieldId, setNewFieldId] = useState<string | null>(null);
   const [focusedFieldId, setFocusedFieldId] = useState<string | null>(null);
 
   const [phase, setPhase] = useState<Phase>("setup");
-  const [currentDisplay, setCurrentDisplay] = useState<{ icon: Icon; text: string } | null>(null);
+  const [currentDisplay, setCurrentDisplay] = useState<Message | null>(null);
   const [winner, setWinner] = useState("");
-  const [celebration, setCelebration] = useState<{ icon: Icon; text: string } | null>(null);
+  const [celebration, setCelebration] = useState<Message | null>(null);
   const [presets, setPresets] = useState<WheelPreset[]>([]);
 
   useEffect(() => {
@@ -96,11 +94,11 @@ export default function SpinWheel() {
     setCurrentDisplay(getRandomItem(SPINNING_MESSAGES));
 
     let spinCount = 0;
-    const totalSpins = 20 + Math.floor(Math.random() * 10);
+    const totalSpins = 30 + Math.floor(Math.random() * 10);
 
     const spinInterval = setInterval(() => {
       const randomOption = validOptions[Math.floor(Math.random() * validOptions.length)];
-      setCurrentDisplay({ icon: Icon.Star, text: randomOption });
+      setCurrentDisplay({ text: randomOption });
       spinCount++;
 
       if (spinCount >= totalSpins) {
@@ -133,15 +131,12 @@ export default function SpinWheel() {
   if (phase === "spinning" && currentDisplay) {
     return (
       <Detail
+        isLoading={true}
         navigationTitle="Spinning..."
         markdown={`# SPINNING THE WHEEL!\n\n---\n\n## ${currentDisplay.text}\n\n---\n\n*Hold tight...*`}
         metadata={
           <Detail.Metadata>
-            <Detail.Metadata.Label
-              title="Status"
-              text="Spinning"
-              icon={{ source: currentDisplay.icon, tintColor: Color.Yellow }}
-            />
+            <Detail.Metadata.Label title="Status" text="Spinning" icon={Icon.CircleProgress} />
           </Detail.Metadata>
         }
       />
